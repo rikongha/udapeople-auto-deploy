@@ -314,7 +314,7 @@ jobs:
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
-            ansible-galaxy install weareinteractive.environment
+            # ansible-galaxy install weareinteractive.environment
             ansible-playbook -i inventory.txt deploy-backend.yml
 #       rollback on failure
       - destroy-environment:
