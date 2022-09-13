@@ -1,0 +1,49 @@
+---
+- name: 'update and upgrade packages.'
+  become: yes
+  apt:
+    upgrade: yes
+    update_cache: yes
+- name: install deps
+  become: yes
+  apt:
+    name: ['nodejs', 'npm']
+    state: latest
+    update_cache: yes
+- name: install pm2
+  become: yes
+  npm:
+    name: pm2
+    global: yes
+    state: latest
+    production: yes
+- name: remove redundant dependencies
+  become: yes
+  apt:
+    autoremove: yes
+- name: extract artifact
+  become: yes
+  unarchive:
+    src: files/artifact.tar.gz
+    dest: .
+- name: start app
+  become: yes
+  shell: |
+    npm run migrations
+    pm2 delete all
+    export $(grep TYPEORM_HOST /home/ubuntu/.env) && pm2 start npm -- start
+- name: check env vars
+  shell: cat /home/ubuntu/.env
+  register: myecho
+- name: check pm2 log
+  become: yes
+  shell: pm2 logs --nostream
+  register: pm2Log
+- name: Debug command
+  debug:
+    var: myecho
+    verbosity: 2
+- name: Show PM2 log
+  debug:
+    var: pm2Log
+    verbosity: 2
