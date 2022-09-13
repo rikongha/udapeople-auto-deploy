@@ -12,8 +12,8 @@ commands:
           name: Destroy environments
           when: on_fail
           command: |
-            echo "Tear down infrastructure: <<parameters.workflow_id>> "
-            
+            echo "Destroy environments <<parameters.workflow_id>> "
+
             aws cloudformation delete-stack \
               --stack-name database-<<parameters.workflow_id>>
             aws cloudformation delete-stack \
@@ -171,13 +171,13 @@ jobs:
       - run:
           name: Add back-end ip to ansible inventory
           command: |
-            echo "[all]" >> .circleci/ansible/inventory.txt
             echo $(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters "Name=tag:Name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text) >> ~/project/.circleci/ansible/inventory.txt
 
             cat .circleci/ansible/inventory.txt
+      - run: return 1 #simulate job fail
       - persist_to_workspace:
           root: ~/
           paths:
