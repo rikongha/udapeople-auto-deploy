@@ -8,10 +8,15 @@
 - name: "install dependencies."
   become: yes
   apt:
-    name: ["nodejs", "npm"]
+    name: ["python3", "nodejs", "npm"]
     state: latest
     update_cache: yes
 
+- name: remove dependencies that are no longer required
+  become: yes
+  apt:
+    autoremove: yes
+    
 - name: "install pm2"
   become: yes
   npm:
