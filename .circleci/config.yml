@@ -20,24 +20,24 @@ commands:
               --stack-name starter-frontend-<<parameters.workflow_id>>
 
 
-# revert-migrations:
-#   description: Revert the last migration if successfully run in the current workflow.
-#   parameters:
-#     # Add parameter here
-#   steps:
-#     - run:
-#         name: Revert migrations
-#         # Add when this will run
-#         command: |
-#           # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-#           SUCCESS = 1
-#           if(( $SUCCESS==1 ));
-#           then
-#           #  cd backend
-#           #  npm install
-#           #  Add revert code here. You can find this in the Getting Started section.
-#             exit 1
-#           fi
+  revert-migrations:
+    description: Revert the last migration if successfully run in the current workflow.
+    parameters:
+      workflow_id:
+        type: string
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            SUCCESS=$(curl --insecure https://kvdb.io/ViWzkdySLpmD9TMMzU5Fzq/migration_${CIRCLE_WORKFLOW_ID:0:7})
+            echo $SUCCESS
+            if (($SUCCESS == 1))
+            then
+              cd ~/project/backend
+              npm install > /dev/null
+              npm run migrations:revert
+            fi
 
 jobs:
   build-frontend:
@@ -232,31 +232,12 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install aws cli
-          command: |
-            sudo apt install -y tar gzip curl
-            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip -qq awscliv2.zip
-            sudo ./aws/install
-      - attach_workspace:
-          at: .
-      - run:
           name: Run migrations
           command: |
-            # Get DB host from AWS and add to env
-            export TYPEORM_HOST=$(aws cloudformation list-exports --query "Exports[?Name==\`EndpointAddress-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" --output text)
-            echo $TYPEORM_HOST
-            echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
-
             cd backend
-            # npm install > /dev/null
-            # npm run build > /dev/null
+            npm installs
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
-      - persist_to_workspace:
-          root: .
-          paths:
-            - backend
       - run:
           name: Send migration results to kvdb.io
           command: |
