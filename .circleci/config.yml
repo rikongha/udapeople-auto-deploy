@@ -379,24 +379,30 @@ jobs:
       - destroy-environment: 
           workflow_id: ${CIRCLE_WORKFLOW_ID}
 
-# cleanup:
-# docker:
-#   # Docker image here
-# steps:
-#   # Checkout code from git
-#   - run:
-#       name: Get old stack workflow id
-#       command: |
-#         # your code here
-#         export OldWorkflowID="the id here"
-#         export STACKS=[] #put the list of stacks here
-#   - run:
-#       name: Remove old stacks and files
-#       command: |
-#         if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
-#         then
-#           # your code here
-#         fi
+cleanup:
+  docker:
+    - image: amazon/aws-cli
+  steps:
+    - checkout
+    - run:
+        name: Get and remove old stack workflow id
+        command: |
+          export OldWorkflowID=$(aws cloudformation list-exports \
+            --query "Exports[?Name==\`Cloudfront-${CIRCLE_WORKFLOW_ID:0:7}\`].Value" \
+            --no-paginate --output text)
+          echo OldWorkflowID=$OldWorkflowID
+          export STACKS=$(aws cloudformation list-stacks \
+            --query "StackSummaries[*].StackName" \
+            --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
+          echo $STACKS
+          if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
+          then
+            aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+            aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+            aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
+          else
+            echo ------------ Cannot cleanup stacks --------------
+          fi
 
 workflows:
   default:
@@ -428,5 +434,5 @@ workflows:
           requires: [deploy-backend, deploy-frontend]
       - cloudfront-update:
           requires: [smoke-test]
-      # - cleanup:
-      #     requires: [cloudfront-update]
+      - cleanup:
+          requires: [cloudfront-update]
