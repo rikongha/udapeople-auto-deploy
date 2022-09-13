@@ -93,7 +93,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/node:13.8.0 
+      - image: circleci/:13.8.0 
     steps:
       - checkout
       - restore_cache:
@@ -249,8 +249,8 @@ jobs:
             echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
 
             cd backend
-            npm install
-            npm run build
+            npm install > /dev/null
+            npm run build > /dev/null
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
       - persist_to_workspace:
@@ -268,25 +268,31 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
-#   deploy-frontend:
-#     docker:
-#       # Docker image here that supports AWS CLI
-#     steps:
-#       # Checkout code from git
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Get backend url
-#           command: |
-#             # your code here
-#             export API_URL="http://${BACKEND_IP}:3030"
-#             echo "${API_URL}"
-#       - run:
-#           name: Deploy frontend objects
-#           command: |
-#             # your code here
+  deploy-frontend:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          command: |
+            yum install -y tar gzip nodejs curl npm epel-release
+            yum install -y ansible
+      - run:
+          name: Get backend url
+          command: |
+            export BACKEND_IP=$(aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7} \
+            --output text)
+            export API_URL="http://${BACKEND_IP}:3030"
+            echo "API_URL = ${API_URL}"
+      - run:
+          name: Deploy frontend objects
+          command: |
+            # your code here
 #       # Here's where you will add some code to rollback on failure
 
 #   deploy-backend:
@@ -385,8 +391,8 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-      # - deploy-frontend:
-      #     requires: [run-migrations]
+      - deploy-frontend:
+          requires: [run-migrations]
       # - deploy-backend:
       #     requires: [run-migrations]
       # - smoke-test:
