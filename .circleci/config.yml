@@ -216,6 +216,7 @@ jobs:
             cat backend/.env
 
             cd .circleci/ansible
+            cat inventory.txt
             ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.txt configure-server.yml
       - persist_to_workspace:
           root: .
