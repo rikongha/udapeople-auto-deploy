@@ -217,7 +217,7 @@ jobs:
 
             cd .circleci/ansible
             cat inventory.txt
-            ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.txt configure-server.yml
+            ansible-playbook -i inventory.txt configure-server.yml
       - persist_to_workspace:
           root: .
           paths:
@@ -270,34 +270,57 @@ jobs:
             --output text)
             export API_URL="http://${BACKEND_IP}:3030"
             echo "API_URL = ${API_URL}"
+            echo "API_URL=http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
       - run:
           name: Deploy frontend objects
           command: |
             cd frontend
             npm install
-            npm run build 2>/dev/null
-            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist 2>/dev/null
+            npm run build
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       # rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
-#   deploy-backend:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # your code here
-#       - run:
-#           name: Deploy backend
-#           command: |
-#             # your code here
-#       # Here's where you will add some code to rollback on failure
+  deploy-backend:
+    docker:
+      - image: python:3.10-alpine3.16
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints:
+            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
+      - attach_workspace:
+          at: .
+      - run:
+          name: Install dependencies
+          command: |
+           apk add --update --no-cache tar gzip nodejs npm aws-cli ansible curl
+      - run:
+          name: Deploy backend
+          command: |
+            cd backend
+            npm i
+            npm run build
+            cd ..
+            tar -C backend -czvf artefact.tar.gz .
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artefact.tar.gz .circleci/ansible/roles/deploy/files/artefact.tar.gz
+            cp backend/.env .circleci/ansible/roles/deploy/files/backend.env
+            cd .circleci/ansible
+            echo "Contents  of the inventory.txt file is -------"
+            cat inventory.txt
+            ansible-galaxy install weareinteractive.environment
+            ansible-playbook -i inventory.txt deploy-backend.yml
+#       rollback on failure
+      - destroy-environment:
+                workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+      - revert-migrations:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 #   smoke-test:
 #     docker:
