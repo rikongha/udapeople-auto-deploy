@@ -328,7 +328,7 @@ jobs:
           command: |
             apk add --update --no-cache curl aws-cli tar gzip
       - run:
-          name: Get backend url
+          name: Backend smoke test.
           command: |
             export BACKEND_IP=$(aws ec2 describe-instances \
               --filters "Name=tag:Name,Values=UdaPeople-backend-${CIRCLE_WORKFLOW_ID:0:5}" \
@@ -337,9 +337,6 @@ jobs:
               --output text)
             export API_URL="http://${BACKEND_IP}:3030/api/status"
             echo "${API_URL}"
-      - run:
-          name: Backend smoke test.
-          command: |
             if curl -s -v --connect-timeout 30 --retry-connrefused 5 "${API_URL}" | grep "ok"
             then 
               return 0
@@ -383,7 +380,7 @@ jobs:
               --stack-name InitialStack \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:5}" \
               --tags project=udapeople
-              
+
             echo "Deployment successful! Migrated from ${OldWorkflowID} to ${CIRCLE_WORKFLOW_ID:0:5}"
       #  rollback on failure
       - revert-migrations: 
