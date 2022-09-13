@@ -19,7 +19,6 @@ commands:
             aws cloudformation delete-stack --stack-name udapeople-frontend-<< parameters.workflow_id >>
             aws cloudformation delete-stack --stack-name udapeople-backend-<< parameters.workflow_id >>
 
-
   revert-migrations:
     description: Revert the last migration if successfully run in the current workflow.
     parameters:
@@ -93,7 +92,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/node:13.8.0 
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -122,8 +121,7 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
       - save_cache:
-          paths:
-            [frontend/node_modules]
+          paths: [frontend/node_modules]
           key: frontend-scan
 
   scan-backend:
@@ -131,7 +129,7 @@ jobs:
       - image: circleci/node:13.8.0
     steps:
       - checkout
-      - restore_cache: 
+      - restore_cache:
           keys: [backend-scan]
       - run:
           name: Analyze backend
@@ -140,8 +138,7 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
       - save_cache:
-          paths:
-            [backend/node_modules]
+          paths: [backend/node_modules]
           key: backend-scan
 
   deploy-infrastructure:
@@ -193,7 +190,7 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
+            - "ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de"
       - run:
           name: Install dependencies
           command: |
@@ -292,13 +289,14 @@ jobs:
       - checkout
       - add_ssh_keys:
           fingerprints:
-            - 'ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de'
+            - "ab:52:25:68:df:4c:3a:d5:48:18:55:d8:f9:3b:df:de"
       - attach_workspace:
           at: .
       - run:
           name: Install dependencies
           command: |
-           apk add --update ansible tar gzip nodejs npm ansible curl openssh
+            apk add --update ansible tar gzip nodejs npm ansible curl openssh
+            pip3 install awscli
       - run:
           name: Deploy backend
           command: |
@@ -314,9 +312,9 @@ jobs:
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
             ansible-playbook -i inventory.txt deploy-backend.yml
-#       rollback on failure
+      #       rollback on failure
       - destroy-environment:
-                workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
