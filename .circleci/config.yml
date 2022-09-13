@@ -179,9 +179,9 @@ jobs:
             cat .circleci/ansible/inventory.txt
       # - run: return 1 #simulate job fail
       - persist_to_workspace:
-          root: ~/
+          root: .
           paths:
-            - project/.circleci/ansible/inventory.txt
+            - .circleci/ansible/inventory.txt
       # rollback on failure
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
