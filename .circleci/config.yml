@@ -249,8 +249,14 @@ jobs:
             echo TYPEORM_HOST=$TYPEORM_HOST >> backend/.env
 
             cd backend
+            npm install
+            npm run build
             npm run migrations > migrations_dump.txt
             cat migrations_dump.txt
+      - persist_to_workspace:
+          root: .
+          paths:
+            - backend
       - run:
           name: Send migration results to kvdb.io
           command: |
