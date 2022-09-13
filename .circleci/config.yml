@@ -93,7 +93,7 @@ jobs:
 
   test-backend:
     docker:
-      - image: circleci/:13.8.0 
+      - image: circleci/node:13.8.0 
     steps:
       - checkout
       - restore_cache:
@@ -292,8 +292,14 @@ jobs:
       - run:
           name: Deploy frontend objects
           command: |
-            # your code here
-#       # Here's where you will add some code to rollback on failure
+            cd frontend
+            npm install
+            npm run build 2>/dev/null
+            tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist 2>/dev/null
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
+      # rollback on failure
+      - destroy-environment:
+          workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
 #   deploy-backend:
 #     docker:
@@ -391,8 +397,8 @@ workflows:
           requires: [deploy-infrastructure]
       - run-migrations:
           requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [run-migrations]
+      # - deploy-frontend:
+      #     requires: [run-migrations]
       # - deploy-backend:
       #     requires: [run-migrations]
       # - smoke-test:
