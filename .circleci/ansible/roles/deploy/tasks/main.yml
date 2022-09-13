@@ -1,49 +1,34 @@
 ---
-- name: 'update and upgrade packages.'
-  become: yes
-  apt:
-    upgrade: yes
-    update_cache: yes
-- name: install deps
-  become: yes
-  apt:
-    name: ['nodejs', 'npm']
-    state: latest
-    update_cache: yes
-- name: install pm2
-  become: yes
-  npm:
-    name: pm2
-    global: yes
-    state: latest
-    production: yes
-- name: remove redundant dependencies
-  become: yes
-  apt:
-    autoremove: yes
 - name: extract artifact
   become: yes
   unarchive:
     src: files/artifact.tar.gz
     dest: .
-- name: start app
+
+- name: load environment variables
+  become_method: sudo
+  become_user: root
   become: yes
   shell: |
-    npm run migrations
-    pm2 delete all
-    export $(grep TYPEORM_HOST /home/ubuntu/.env) && pm2 start npm -- start
-- name: check env vars
-  shell: cat /home/ubuntu/.env
-  register: myecho
-- name: check pm2 log
+    ls -al
+    echo "NODE_ENV=production" >> .env
+    echo "ENVIRONMENT=production" >> .env
+    echo "TYPEORM_CONNECTION={{ lookup('env', 'TYPEORM_CONNECTION')}}" >> .env
+    echo "TYPEORM_ENTITIES={{ lookup('env', 'TYPEORM_ENTITIES')}}" >> .env
+    echo "TYPEORM_HOST={{ lookup('env', 'TYPEORM_HOST')}}" >> .env
+    echo "TYPEORM_PORT={{ lookup('env', 'TYPEORM_PORT')}}" >> .env
+    echo "TYPEORM_USERNAME={{ lookup('env', 'TYPEORM_USERNAME')}}" >> .env
+    echo "TYPEORM_PASSWORD={{ lookup('env', 'TYPEORM_PASSWORD')}}" >> .env
+    echo "TYPEORM_DATABASE={{ lookup('env', 'TYPEORM_DATABASE')}}" >> .env
+    echo "TYPEORM_MIGRATIONS={{ lookup('env', 'TYPEORM_MIGRATIONS')}}" >> .env
+    echo "TYPEORM_MIGRATIONS_DIR={{ lookup('env', 'TYPEORM_MIGRATIONS_DIR')}}" >> .env
+    
+- name: start server
   become: yes
-  shell: pm2 logs --nostream
-  register: pm2Log
-- name: Debug command
-  debug:
-    var: myecho
-    verbosity: 2
-- name: Show PM2 log
-  debug:
-    var: pm2Log
-    verbosity: 2
+  become_method: sudo
+  become_user: root 
+  shell: |
+    npm install
+    pm2 stop default
+    pm2 start npm -- start
+    pm2 start dist/main.js --name node-app
