@@ -1,8 +1,8 @@
 ---
-- name: extract artifact
+- name: extract artefact
   become: yes
   unarchive:
-    src: files/artifact.tar.gz
+    src: files/artefact.tar.gz
     dest: .
 
 - name: load environment variables
