@@ -15,7 +15,7 @@ commands:
             echo "Destroy environments <<parameters.workflow_id>> "
 
             aws cloudformation delete-stack \
-              --stack-name database-<<parameters.workflow_id>>
+              --stack-name udapeople-backend-<<parameters.workflow_id>>
             aws cloudformation delete-stack \
               --stack-name starter-frontend-<<parameters.workflow_id>>
 
@@ -173,11 +173,11 @@ jobs:
           command: |
             echo $(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:Name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text) >> ~/project/.circleci/ansible/inventory.txt
 
             cat .circleci/ansible/inventory.txt
-      - run: return 1 #simulate job fail
+      # - run: return 1 #simulate job fail
       - persist_to_workspace:
           root: ~/
           paths:
@@ -186,24 +186,24 @@ jobs:
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 
-#   configure-infrastructure:
-#     docker:
-#       # Docker image here that supports Ansible
-#     steps:
-#       # Checkout code from git
-#       # Add ssh keys with fingerprint
-#       # attach workspace
-#       - run:
-#           name: Install dependencies
-#           command: |
-#             # Your code here
-#             exit 1
-#       - run:
-#           name: Configure server
-#           command: |
-#             # Your code here
-#             exit 1
-#       # Here's where you will add some code to rollback on failure
+  configure-infrastructure:
+    docker:
+      # Docker image here that supports Ansible
+    steps:
+      # Checkout code from git
+      # Add ssh keys with fingerprint
+      # attach workspace
+      - run:
+          name: Install dependencies
+          command: |
+            # Your code here
+            exit 1
+      - run:
+          name: Configure server
+          command: |
+            # Your code here
+            exit 1
+      # Here's where you will add some code to rollback on failure
 
 #   run-migrations:
 #     docker:
