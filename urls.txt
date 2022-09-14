@@ -1,2 +1,2 @@
 [URL01] A public git repository with your project code: https://github.com/rikongha/udapeople-auto-deploy
-[URL02] http://udapeople-0378837.s3-website-us-east-1.amazonaws.com/#/employees
+[URL02] http://udapeople-c570af8.s3-website-us-east-1.amazonaws.com
