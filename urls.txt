@@ -1,2 +1,3 @@
 [URL01] A public git repository with your project code: https://github.com/rikongha/udapeople-auto-deploy
-[URL02] http://udapeople-c570af8.s3-website-us-east-1.amazonaws.com
+[URL02] http://udapeople-46ada70.s3-website-us-east-1.amazonaws.com
+[URL03] Cloudfront - https://d197okscpc6kmy.cloudfront.net
